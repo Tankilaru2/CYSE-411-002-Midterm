@@ -43,7 +43,6 @@ function saveDashboardState() {
 }
 
 
-
 //  Q5.A  Fetch Incidents
 //  Retrieves open incidents from the REST API.
 //  VULNERABILITY 1: fetch() is called but NOT awaited.
