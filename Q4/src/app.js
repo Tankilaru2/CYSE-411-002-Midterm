@@ -58,7 +58,6 @@ function performSearch(query) {
     }
 }
 
-
 //  Application Bootstrap
 //  Runs when the page finishes loading.
 
