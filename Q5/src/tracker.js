@@ -20,12 +20,22 @@ let currentFilter = "all";
 //  it belongs to the accepted list.
 
 
-function loadDashboardState() {
-    const raw   = localStorage.getItem("dashboardState");
-    const state = JSON.parse(raw);             // No try/catch
-    currentFilter = state.filter;              // No enum validation
-    applyFilter(currentFilter);
-}
+ let currentFilter = "all";
+
+try {
+    const raw = localStorage.getItem("dashboardState");
+
+    if (raw) {
+        const state = JSON.parse(raw);
+        const allowedFilters = ["all", "open", "closed"];
+
+        if (state && allowedFilters.includes(state.filter)) {
+            currentFilter = state.filter;
+        }
+    }
+} catch (e) {}
+
+applyFilter(currentFilter);
 
 
 //  Q5.C  Dashboard State – Save
@@ -37,11 +47,17 @@ function loadDashboardState() {
 
 function saveDashboardState() {
     const filterInput = document.getElementById("filter-select");
-    const filter      = filterInput.value;    // Not validated before storing
-    localStorage.setItem("dashboardState", JSON.stringify({ filter: filter }));
+    const filter = filterInput.value;
+
+    const allowedFilters = ["all", "active", "completed"];
+
+    if (!allowedFilters.includes(filter)) return;
+
+    const state = { filter: filter };
+    localStorage.setItem("dashboardState", JSON.stringify(state));
+
     currentFilter = filter;
 }
-
 
 
 //  Q5.A  Fetch Incidents
