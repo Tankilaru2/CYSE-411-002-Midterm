@@ -21,12 +21,24 @@ let currentFilter = "all";
 
 
 function loadDashboardState() {
-    const raw   = localStorage.getItem("dashboardState");
-    const state = JSON.parse(raw);             // No try/catch
-    currentFilter = state.filter;              // No enum validation
-    applyFilter(currentFilter);
-}
+    const raw = localStorage.getItem("dashboardState");
+    if (!raw) return;
 
+    let state;
+
+    try {
+        state = JSON.parse(raw);
+    } catch (e) {
+        return;
+    }
+
+    const allowedFilters = ["all", "active", "completed"];
+
+    if (state && allowedFilters.includes(state.filter)) {
+        currentFilter = state.filter;
+        applyFilter(currentFilter);
+    }
+}
 
 //  Q5.C  Dashboard State – Save
 //  Writes the selected filter back to localStorage after a fetch.
@@ -37,11 +49,17 @@ function loadDashboardState() {
 
 function saveDashboardState() {
     const filterInput = document.getElementById("filter-select");
-    const filter      = filterInput.value;    // Not validated before storing
-    localStorage.setItem("dashboardState", JSON.stringify({ filter: filter }));
+    const filter = filterInput.value;
+
+    const allowedFilters = ["all", "active", "completed"];
+
+    if (!allowedFilters.includes(filter)) return;
+
+    const state = { filter: filter };
+    localStorage.setItem("dashboardState", JSON.stringify(state));
+
     currentFilter = filter;
 }
-
 
 
 //  Q5.A  Fetch Incidents
@@ -53,11 +71,21 @@ function saveDashboardState() {
 //  VULNERABILITY 3: No try/catch – a network failure will
 //    crash the function with an unhandled rejection.
 
-
 async function fetchIncidents() {
-    const res  = fetch("/api/incidents");      // Missing await
-    const data = res.json();                   // Missing await; res is a Promise
-    return data;
+    try {
+        const res = await fetch("/api/incidents");
+
+        if (!res.ok) {
+            throw new Error(`HTTP error: ${res.status}`);
+        }
+
+        const data = await res.json();
+        return data;
+
+    } catch (error) {
+        console.error("Failed to fetch incidents:", error);
+        return null;
+    }
 }
 
 
@@ -73,15 +101,35 @@ async function fetchIncidents() {
 
 function renderIncidents(incidents) {
     const container = document.getElementById("incident-list");
-    container.innerHTML = "";                  // Clear previous results
+    container.innerHTML = "";
+
+    if (!Array.isArray(incidents)) return;
+
+    const allowedSeverities = ["low", "medium", "high"];
 
     incidents.forEach(function (incident) {
+        if (
+            !incident ||
+            typeof incident.title !== "string" ||
+            typeof incident.severity !== "string" ||
+            !allowedSeverities.includes(incident.severity.toLowerCase())
+        ) {
+            return;
+        }
+
         const item = document.createElement("li");
-        // UNSAFE – directly inserts API response as HTML
-        item.innerHTML =
-            "<strong>" + incident.title + "</strong>" +
-            " <span class='severity severity-" + incident.severity + "'>" +
-            incident.severity + "</span>";
+
+        const titleEl = document.createElement("strong");
+        titleEl.textContent = incident.title;
+
+        const severityEl = document.createElement("span");
+        severityEl.className = "severity severity-" + incident.severity.toLowerCase();
+        severityEl.textContent = incident.severity;
+
+        item.appendChild(titleEl);
+        item.appendChild(document.createTextNode(" "));
+        item.appendChild(severityEl);
+
         container.appendChild(item);
     });
 }
