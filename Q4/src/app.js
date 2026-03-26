@@ -18,9 +18,11 @@ function loadSession() {
 
 
 function renderStatusMessage(containerElement, message) {
-    containerElement.innerHTML = "<p>" + message + "</p>";   // UNSAFE
+    const p = document.createElement("p");
+    p.textContent = message;   // SAFE – treats input as plain text
+    containerElement.innerHTML = "";  // clear existing content
+    containerElement.appendChild(p);
 }
-
 
 
 //  Q4.B  Search Query Sanitization
